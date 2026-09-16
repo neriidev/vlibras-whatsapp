@@ -171,9 +171,9 @@ export class RendererService {
         }
       }, gloss);
 
-      // 5. Aguardar a animação iniciar
-      console.log('[Renderer] Aguardando animação de Libras iniciar...');
-      await new Promise(r => setTimeout(r, 3000));
+      // 5. Aguardar minimamente o Unity registrar o comando (não podemos esperar muito senão perdemos o início)
+      console.log('[Renderer] Preparando para capturar imediatamente...');
+      await new Promise(r => setTimeout(r, 200));
 
       // 7. Capturar frames via screenshots sequenciais
       console.log('[Renderer] Iniciando captura de frames (screenshot mode)...');
@@ -225,7 +225,7 @@ export class RendererService {
           .outputOptions('-c:v', 'libx264')
           .outputOptions('-preset', 'fast')
           .outputOptions('-pix_fmt', 'yuv420p')
-          .outputOptions('-vf', 'scale=640:480,setpts=1.5*PTS') // setpts=1.5*PTS deixa o vídeo 50% mais lento e suave
+          .outputOptions('-vf', 'scale=640:480,setpts=2.0*PTS') // setpts=2.0*PTS deixa o vídeo 2x mais lento e suave
           .outputOptions('-r', '30') // output a 30fps para ficar suave
           .save(mp4Path)
           .on('end', () => resolve())
