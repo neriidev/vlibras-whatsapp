@@ -64,7 +64,29 @@ export class RendererService {
     try {
       console.log(`[Renderer] Preparando página para renderizar: "${text}"`);
 
-      // 1. Carregar o Unity player PRIMEIRO para ter a origin correta
+      // 1. Traduzir o texto para gloss via API oficial
+      console.log('[Renderer] Traduzindo texto para gloss...');
+      const glossResponse = await fetch('https://traducao2.vlibras.gov.br/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      });
+      
+      if (!glossResponse.ok) {
+        throw new Error(`Erro na tradução: ${glossResponse.status}`);
+      }
+      
+      const glossText = await glossResponse.text();
+      let gloss: string;
+      try {
+        const parsed = JSON.parse(glossText);
+        gloss = parsed.traducao || glossText;
+      } catch {
+        gloss = glossText.trim();
+      }
+      console.log(`[Renderer] Gloss obtido: "${gloss}"`);
+
+      // 2. Carregar o Unity player DIRETAMENTE (sem o widget wrapper que bloqueia WebGL)
       await page.setViewport({ width: 640, height: 480 });
       
       console.log('[Renderer] Carregando Unity player diretamente...');
@@ -72,38 +94,6 @@ export class RendererService {
         waitUntil: 'domcontentloaded', 
         timeout: 30000 
       });
-
-      // 2. Traduzir o texto para gloss via API oficial - DENTRO do browser
-      // Isso garante que Origin/Referer são de vlibras.gov.br (evita 403 em VPS)
-      console.log('[Renderer] Traduzindo texto para gloss (via browser)...');
-      const glossResult = await page.evaluate(async (inputText: string) => {
-        try {
-          const response = await fetch('https://traducao2.vlibras.gov.br/translate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: inputText }),
-          });
-          if (!response.ok) {
-            return { error: `HTTP ${response.status}` };
-          }
-          const data = await response.text();
-          try {
-            const parsed = JSON.parse(data);
-            return { gloss: parsed.traducao || data };
-          } catch {
-            return { gloss: data.trim() };
-          }
-        } catch (err: any) {
-          return { error: err.message || 'Fetch failed' };
-        }
-      }, text);
-
-      if (glossResult.error) {
-        throw new Error(`Erro na tradução: ${glossResult.error}`);
-      }
-      
-      const gloss = glossResult.gloss!;
-      console.log(`[Renderer] Gloss obtido: "${gloss}"`);
 
       // 3. Aguardar o Unity carregar completamente (avatar 3D visível)
       console.log('[Renderer] Aguardando Unity carregar o avatar 3D...');
