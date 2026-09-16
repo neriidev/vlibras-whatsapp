@@ -6,14 +6,10 @@ on:
       - main
 
 jobs:
-  terraform:
-    name: "Provision Infrastructure"
+  provision_and_deploy:
+    name: "Provision and Deploy"
     runs-on: ubuntu-latest
     
-    # Este step disponibiliza a saída do Terraform (IP) para o Job de deploy
-    outputs:
-      ec2_ip: ${{ steps.tf_outputs.outputs.ec2_public_ip }}
-      
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
@@ -36,50 +32,38 @@ jobs:
 
       - name: Terraform Apply
         working-directory: terraform
-        env:
-          TF_VAR_public_key: ${{ secrets.TF_VAR_PUBLIC_KEY }}
         run: terraform apply -auto-approve
         
-      - name: Obter Output do IP
+      - name: Obter Outputs do Terraform
         id: tf_outputs
         working-directory: terraform
         run: |
           EC2_IP=$(terraform output -raw ec2_public_ip)
           echo "ec2_public_ip=$EC2_IP" >> $GITHUB_OUTPUT
+          
+          # Salvar a chave privada em um arquivo temporário
+          terraform output -raw private_key_pem > ../deploy_key.pem
+          chmod 600 ../deploy_key.pem
 
-  deploy:
-    name: "Deploy Application"
-    needs: terraform
-    runs-on: ubuntu-latest
-    steps:
       - name: Wait for EC2 to Boot
         run: sleep 60 # Espera 1 minuto para o Ubuntu e SSH iniciarem
         
       - name: Executar comandos via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ needs.terraform.outputs.ec2_ip }}
+          host: ${{ steps.tf_outputs.outputs.ec2_public_ip }}
           username: ubuntu
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key_path: ./deploy_key.pem
           script: |
-            # Navegar até a pasta do projeto (O user_data já criou no /home/ubuntu/)
+            # Navegar até a pasta do projeto
             cd /home/ubuntu
             
-            # Se a pasta não existir (repo privado/falha no user_data), clona
             if [ ! -d "vlibras-whatsapp" ]; then
               git clone https://github.com/neriidev/vlibras-whatsapp.git
             fi
             
             cd vlibras-whatsapp
-            
-            # Puxar código mais recente da branch main
             git pull origin main
-            
-            # Subir o banco de dados e Redis primeiro (se necessário)
             docker-compose up -d postgres redis
-            
-            # Aguardar o banco (garante que evolution tem banco)
             sleep 10
-            
-            # Recriar as imagens Docker e iniciar tudo
             docker-compose up -d --build

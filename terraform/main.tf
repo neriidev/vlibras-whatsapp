@@ -18,10 +18,16 @@ provider "aws" {
   region = var.aws_region
 }
 
-# Criar a chave SSH na AWS a partir da chave pública fornecida
+# Gerar uma chave privada localmente no Terraform
+resource "tls_private_key" "deployer_key" {
+  algorithm = "RSA"
+  rsa_bits  = 4096
+}
+
+# Criar a chave SSH na AWS a partir da chave pública gerada
 resource "aws_key_pair" "deployer_key" {
   key_name   = "vlibras-deploy-key"
-  public_key = var.public_key
+  public_key = tls_private_key.deployer_key.public_key_openssh
 }
 
 # Criar o Security Group (Firewall)

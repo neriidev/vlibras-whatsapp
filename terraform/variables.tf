@@ -9,9 +9,3 @@ variable "instance_type" {
   type        = string
   default     = "t3.small"
 }
-
-variable "public_key" {
-  description = "Chave SSH pública (conteúdo do arquivo .pub) para injetar na EC2"
-  type        = string
-  sensitive   = true
-}
