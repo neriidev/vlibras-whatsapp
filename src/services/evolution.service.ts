@@ -80,9 +80,13 @@ export class EvolutionService {
       // Se não houver WEBHOOK_URL configurada no .env, não seta
       if (process.env.WEBHOOK_URL) {
         await this.api.post(`/webhook/set/${env.INSTANCE_NAME}`, {
-          enabled: true,
-          url: `${process.env.WEBHOOK_URL}/webhook/evolution`,
-          events: ['MESSAGES_UPSERT']
+          webhook: {
+            enabled: true,
+            url: `${process.env.WEBHOOK_URL}/webhook/evolution`,
+            byEvents: false,
+            base64: false,
+            events: ['MESSAGES_UPSERT']
+          }
         });
         console.log('Webhook configurado com sucesso na Evolution API.');
       }
