@@ -4,9 +4,6 @@ node_modules/
 # Build output
 dist/
 
-# Environment variables
-.env
-
 # OS files
 Thumbs.db
 .DS_Store
