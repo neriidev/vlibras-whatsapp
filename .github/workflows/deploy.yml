@@ -21,6 +21,24 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
+      - name: Limpeza da Infraestrutura Antiga (Destroy)
+        run: |
+          echo "Buscando instancias antigas..."
+          INSTANCE_ID=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=vlibras-whatsapp-server" "Name=instance-state-name,Values=running,stopped,pending,shutting-down" --query "Reservations[*].Instances[*].InstanceId" --output text)
+          
+          if [ -n "$INSTANCE_ID" ]; then
+            echo "Terminando instancia $INSTANCE_ID..."
+            aws ec2 terminate-instances --instance-ids $INSTANCE_ID
+            echo "Aguardando termino da instancia..."
+            aws ec2 wait instance-terminated --instance-ids $INSTANCE_ID
+          fi
+          
+          echo "Limpando Security Group antigo..."
+          aws ec2 delete-security-group --group-name vlibras_security_group || true
+          
+          echo "Limpando Chave SSH antiga..."
+          aws ec2 delete-key-pair --key-name vlibras-deploy-key || true
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
