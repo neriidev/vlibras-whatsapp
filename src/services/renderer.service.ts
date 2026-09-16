@@ -181,7 +181,11 @@ export class RendererService {
       let frameCount = 0;
       const capturedFrames: string[] = [];
       const captureStartTime = Date.now();
-      const captureDuration = 10000; // 10 segundos
+      
+      // Calcular duração dinâmica: 1.5s por palavra + 3s de margem de segurança (mínimo de 10s)
+      const wordCount = gloss.split(/[\s,]+/).length;
+      const captureDuration = Math.max(10000, (wordCount * 1500) + 3000); 
+      
       const frameInterval = 100; // ~10fps
 
       console.log(`[Renderer] Gravando por ${captureDuration / 1000} segundos (~${1000/frameInterval}fps)...`);
