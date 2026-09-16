@@ -74,20 +74,20 @@ export class EvolutionService {
 
   async setWebhook(): Promise<void> {
     try {
+      // Usar a URL base de onde a aplicação estiver rodando ou uma variável. 
+      // Por padrão configuramos de forma que o usuário precisará preencher uma env se estiver num tunel.
+      // Para localhost podemos usar ngrok url ou simplesmente setar a rota
+      // Se não houver WEBHOOK_URL configurada no .env, não seta
       if (process.env.WEBHOOK_URL) {
         await this.api.post(`/webhook/set/${env.INSTANCE_NAME}`, {
-          webhook: {
-            enabled: true,
-            url: `${process.env.WEBHOOK_URL}/webhook/evolution`,
-            byEvents: false,
-            base64: false,
-            events: ['MESSAGES_UPSERT']
-          }
+          enabled: true,
+          url: `${process.env.WEBHOOK_URL}/webhook/evolution`,
+          events: ['MESSAGES_UPSERT']
         });
         console.log('Webhook configurado com sucesso na Evolution API.');
       }
-    } catch (error: any) {
-      console.error('Erro ao configurar webhook:', error?.response?.data || error.message);
+    } catch (error) {
+      console.error('Erro ao configurar webhook:', error);
     }
   }
 }
