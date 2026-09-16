@@ -1,0 +1,26 @@
+name: Deploy to AWS EC2
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Executar comandos via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # Navegar até a pasta do projeto no servidor EC2
+            cd /home/ubuntu/vlibras-whatsapp
+            
+            # Puxar código mais recente da branch main
+            git pull origin main
+            
+            # Recriar as imagens Docker e reiniciar os containers em background
+            docker-compose up -d --build app
