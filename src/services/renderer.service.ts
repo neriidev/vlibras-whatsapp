@@ -225,7 +225,7 @@ export class RendererService {
           .outputOptions('-c:v', 'libx264')
           .outputOptions('-preset', 'fast')
           .outputOptions('-pix_fmt', 'yuv420p')
-          .outputOptions('-vf', 'scale=640:480')
+          .outputOptions('-vf', 'scale=640:480,setpts=1.5*PTS') // setpts=1.5*PTS deixa o vídeo 50% mais lento e suave
           .outputOptions('-r', '30') // output a 30fps para ficar suave
           .save(mp4Path)
           .on('end', () => resolve())
