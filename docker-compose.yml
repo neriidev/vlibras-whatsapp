@@ -26,12 +26,12 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - SERVER_URL=http://localhost:8080
+      - SERVER_URL=${SERVER_URL:-http://localhost:8080}
       - DANGEROUS_FUNCTIONS=true
       - AUTHENTICATION_TYPE=apikey
       - AUTHENTICATION_API_KEY=B6D711FCDE4D4FD5936544120E713976
       - DATABASE_PROVIDER=postgresql
-      - DATABASE_CONNECTION_URI=postgresql://postgres:postgres@postgres:5432/evolution?schema=public
+      - DATABASE_CONNECTION_URI=postgresql://postgres:postgres@postgres:5432/evolution?schema=public&connection_limit=20&pool_timeout=60
       - DATABASE_CONNECTION_CLIENT_NAME=evolution
       - REDIS_ENABLED=true
       - REDIS_URI=redis://redis:6379
@@ -51,6 +51,7 @@ services:
     image: postgres:15-alpine
     container_name: postgres
     restart: always
+    command: postgres -c max_connections=200 -c shared_buffers=256MB
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
