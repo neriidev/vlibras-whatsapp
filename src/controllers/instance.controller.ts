@@ -10,7 +10,7 @@ export class InstanceController {
       const connection = await evolutionService.getConnectionState();
 
       if (connection.state === 'not_found') {
-        // Criar a instância
+        // Criar a instância (já configura o webhook)
         const instanceData = await evolutionService.createInstance();
         if (instanceData.qrcode && instanceData.qrcode.base64) {
           return reply.send({ status: 'qrcode', base64: instanceData.qrcode.base64 });
@@ -18,10 +18,13 @@ export class InstanceController {
       }
 
       if (connection.state === 'open') {
+        // Garantir que o webhook esteja configurado mesmo para instâncias já existentes
+        await evolutionService.setWebhook();
         return reply.send({ status: 'connected' });
       }
 
-      // Se já existe mas não está conectada, busca o QR code
+      // Se já existe mas não está conectada, configurar webhook e buscar QR code
+      await evolutionService.setWebhook();
       const qrCodeData = await evolutionService.getQrCode();
       if (qrCodeData.base64) {
         return reply.send({ status: 'qrcode', base64: qrCodeData.base64 });
