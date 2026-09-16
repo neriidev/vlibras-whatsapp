@@ -44,10 +44,24 @@ export class WebhookController {
   }
 
   private async processMessage(remoteJid: string, text: string) {
+    const number = remoteJid.replace('@s.whatsapp.net', '');
+    
     try {
+      // 1. Avisar que recebeu e começou a processar
+      await evolutionService.sendText(
+        number, 
+        '⏳ *Recebi sua mensagem!*\nEstou ligando o avatar do VLibras para gravar a tradução. Isso leva alguns segundinhos...'
+      ).catch(console.error);
+
       // Geração real do Vídeo em Libras usando Puppeteer
       const videoPath = await vlibrasService.requestVideo(text);
       
+      // 2. Avisar que terminou e está enviando
+      await evolutionService.sendText(
+        number, 
+        '✅ *Gravação concluída!*\nEstou enviando o vídeo para você agora...'
+      ).catch(console.error);
+
       // Ler o MP4 gerado
       const fs = require('fs');
       const videoBuffer = fs.readFileSync(videoPath);
@@ -55,11 +69,11 @@ export class WebhookController {
       
       // Envio da Resposta com o vídeo Base64
       await evolutionService.sendVideo({
-        number: remoteJid.replace('@s.whatsapp.net', ''),
+        number: number,
         mediatype: 'video',
         mimetype: 'video/mp4',
         media: videoBase64,
-        caption: 'Aqui está a tradução em Libras da sua mensagem.',
+        caption: 'Aqui está a tradução em Libras da sua mensagem!',
         fileName: 'vlibras.mp4'
       });
       
