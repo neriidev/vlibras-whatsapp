@@ -68,7 +68,12 @@ export class RendererService {
       console.log('[Renderer] Traduzindo texto para gloss...');
       const glossResponse = await fetch('https://traducao2.vlibras.gov.br/translate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Referer': 'https://vlibras.gov.br/',
+          'Origin': 'https://vlibras.gov.br',
+          'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36'
+        },
         body: JSON.stringify({ text }),
       });
       
